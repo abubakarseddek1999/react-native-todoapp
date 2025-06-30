@@ -1,8 +1,10 @@
-import { FlatList,Dimensions, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { FlatList, Dimensions, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import React, { useState } from 'react'
 
 const TodoScreen = () => {
     const { height: screenHeight } = Dimensions.get('window');
+    const [text, setText] = useState('');
+    const [todoList, setTodoList] = useState([]);
     const [todos, setTodos] = useState([
         { id: '1', text: 'Learn React Native Learn React Native Learn React Native Learn React Native Learn React Native' },
         { id: '2', text: 'Build a Todo App Learn React Native Learn React Natives Learn React Native Learn React Native Learn React Native ' },
@@ -10,6 +12,29 @@ const TodoScreen = () => {
         { id: '4', text: 'Learn Redux Learn React Native' },
         { id: '5', text: 'Learn Firebase Learn React Native Learn React Native' },
     ])
+    // Handle Add Todo
+    const handleAddTodo = () => {
+        // structure of a single todo item
+        // {
+        //     id:
+        //     title:
+
+        // }
+        if (text.trim() === '') {
+            alert('Please enter a todo');
+            return;
+        }
+        setTodoList([...todoList, {id:Date.now().toString(), text: text}]);
+        setText(''); // clear the input field after adding the todo
+
+    }
+    // Handle Delete Todo
+    const handleDeleteTodo = (id) => {
+        setTodoList(todoList.filter(todo => todo.id !== id));
+
+    }
+
+    // render todos
     const renderTodos = ({ item, index }) => {
         return (
             <View style={styles.todoItem}>
@@ -20,7 +45,7 @@ const TodoScreen = () => {
                     <TouchableOpacity style={styles.editButton}>
                         <Text style={styles.buttonText}>Edit</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.deleteButton}>
+                    <TouchableOpacity onPress={() => handleDeleteTodo(item.id)} style={styles.deleteButton}>
                         <Text style={styles.buttonText}>Delete</Text>
                     </TouchableOpacity>
                 </View>
@@ -44,15 +69,17 @@ const TodoScreen = () => {
                 }}
 
                 placeholder="Enter your todo"
+                value={text}
+                onChangeText={(text) => setText(text)}
             />
             {/* add button */}
-            <TouchableOpacity style={styles.addButton}>
+            <TouchableOpacity onPress={() => handleAddTodo()} style={styles.addButton}>
                 <Text style={styles.addButtonText}>Add</Text>
             </TouchableOpacity>
             {/* Dynamic height: screenHeight - 100 */}
             <View style={{ height: screenHeight - 180 }}>
                 <FlatList
-                    data={todos}
+                    data={todoList}
                     renderItem={renderTodos}
                     keyExtractor={(item) => item.id}
                     showsVerticalScrollIndicator={false}
@@ -89,10 +116,15 @@ const styles = StyleSheet.create({
         gap: 10,
         backgroundColor: '#fff',
         shadowColor: '#000',
-        elevation: 2,
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 1,
+        elevation: 5,
         padding: 10,
-        shadowOpacity: 0.2,
         borderRadius: 10,
+        marginHorizontal: 2,
         marginVertical: 10,
         flexDirection: 'column',
         justifyContent: 'space-between',
