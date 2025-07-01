@@ -1,23 +1,31 @@
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 
 const TodoListHeader = ({ text, setText, editingTodoId, handleAddTodo }) => {
+    const [isFocused, setIsFocused] = useState(false);
+
     return (
         <View>
             {/* input */}
-            <TextInput
-                style={{
-                    borderWidth: 2,
-                    borderColor: 'black',
-                    borderRadius: 10,
-                    padding: 10,
-                    marginVertical: 10
-                }}
+            <View style={styles.inputContainer}>
+                <TextInput
+                    style={[
+                        styles.input,
+                        isFocused && { borderColor: '#27ae60', borderWidth: 2 } // Focus হলে সবুজ highlight
+                    ]}
+                    placeholder={editingTodoId ? 'Edit your task...' : 'Write your task here...'}
+                    value={text}
+                    onChangeText={(text) => setText(text)}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                />
 
-                placeholder="Enter your task here"
-                value={text}
-                onChangeText={(text) => setText(text)}
-            />
+                {text.length > 0 && (
+                    <TouchableOpacity onPress={() => setText('')} style={styles.clearButton}>
+                        <Text style={{ fontSize: 20, color: '#999' }}>✕</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
             {/* add button */}
             <TouchableOpacity onPress={handleAddTodo} style={styles.addButton}>
                 <Text style={styles.addButtonText}>
@@ -47,4 +55,25 @@ const styles = StyleSheet.create({
         color: 'white',
         padding: 5,
     },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        fontSize: 16,
+        backgroundColor: '#f9f9f9',
+        marginBottom: 10,
+    }
+    ,
+    inputContainer: {
+        position: 'relative',
+        marginBottom: 0,
+    },
+    clearButton: {
+        position: 'absolute',
+        right: 15,
+        top: 10,
+    },
+
 })

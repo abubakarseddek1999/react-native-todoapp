@@ -1,22 +1,17 @@
-import { FlatList, Dimensions, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, View, Keyboard } from 'react-native'
+import { FlatList, Dimensions, StyleSheet, Text, TouchableOpacity, View, Keyboard } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import Fallback from '../components/Fallback';
-
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import TodoListHeader from '../components/todoListHeader/todoListHeader';
 import { format } from 'date-fns';
 
 const TodoScreen = () => {
-    const { height: screenHeight } = Dimensions.get('window');
-    const [text, setText] = useState('');
-    console.log(text)
-    const [editingTodoId, setEditingTodoId] = useState(null);
+    const isFocused = useIsFocused();
+    const navigation = useNavigation();
     const [todoList, setTodoList] = useState([]);
-    console.log(todoList)
 
-    // Load data from AsyncStorage
+    // Load data from AsyncStorage when screen focused
     useEffect(() => {
-        const LoadTodosFromStorage = async () => {
+        const loadTodosFromStorage = async () => {
             try {
                 const storedTodos = await AsyncStorage.getItem('todos');
                 if (storedTodos) {
@@ -26,140 +21,127 @@ const TodoScreen = () => {
                 console.error('Error loading todos from storage:', error);
             }
         };
-        LoadTodosFromStorage();
+        loadTodosFromStorage();
+    }, [isFocused]);
 
-
-    }, []); // Load data on component mount
-
+    // Save data to AsyncStorage whenever todoList changes
     useEffect(() => {
-        const SaveTodosToStorage = async () => {
+        const saveTodosToStorage = async () => {
             try {
                 await AsyncStorage.setItem('todos', JSON.stringify(todoList));
             } catch (error) {
                 console.error('Error saving todos to storage:', error);
             }
         };
-        SaveTodosToStorage();
-    }, [todoList]); // Save whenever todoList changes
+        saveTodosToStorage();
+    }, [todoList]);
 
-
-
-    // Handle Add Todo
-    const handleAddTodo = () => {
-        if (text.trim() === '') {
-            alert('Please enter Your task');
-            return;
-        }
-        const date = new Date();
-        const formattedDate = format(date, "dd MMMM yyyy");   // 👉 01 July 2025
-        const formattedTime = format(date, "hh:mm a");        // 👉 04:17 PM
-        if (editingTodoId) {
-            // Update existing todo
-            const updatedTodos = todoList.map(todo =>
-                todo.id === editingTodoId ? { ...todo, text, date: formattedDate, time: formattedTime } : todo
-            );
-            setTodoList(updatedTodos);
-            setEditingTodoId(null); // Clear editing state
-        } else {
-            // Add new todo
-            setTodoList([...todoList, { id: Date.now().toString(), text, date: formattedDate, time: formattedTime }]);
-        }
-
-        setText(''); // Clear input
-        // ছোট delay দিয়ে কীবোর্ড বন্ধ করুন (state update এর পর)
-        setTimeout(() => {
-            Keyboard.dismiss();
-        }, 100);
-    };
-
-    // Handle Delete Todo
+    // Delete Todo
     const handleDeleteTodo = (id) => {
         setTodoList(todoList.filter(todo => todo.id !== id));
-
     }
 
-    // render todos
-    const renderTodos = ({ item, index }) => {
-        return (
-            <View style={styles.todoItem}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{item.text}</Text>
+    // Render each todo item
+    const renderTodos = ({ item }) => (
+        <View style={styles.todoItem}>
+            <Text style={styles.title}>{item.text}</Text>
+            {item.description ? (
+                <Text style={styles.description}>{item.description}</Text>
+            ) : null}
+            {item.priority ? (
+                <Text style={styles.priority}>Priority: {item.priority}</Text>
+            ) : null}
 
-                {/* edit button and delete button */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 5}}>
-                        <TouchableOpacity style={styles.editButton}
-                            onPress={() => {
-                                setText(item.text);
-                                setEditingTodoId(item.id);
-                            }}
-                        >
-                            <Text style={styles.buttonText}>Edit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDeleteTodo(item.id)} style={styles.deleteButton}>
-                            <Text style={styles.buttonText}>Delete</Text>
-                        </TouchableOpacity>
-                    </View>
-                    
-                    <View style={{ flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: 11, color: 'gray' }}>{item.date}</Text>
-                        <Text style={{ fontSize: 11, color: 'gray' }}>{item.time}</Text>
-                    </View>
+            <View style={styles.todoFooter}>
+                <View style={styles.buttonGroup}>
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => navigation.navigate('AddTask', { todo: item })}
+                    >
+                        <Text style={styles.buttonText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDeleteTodo(item.id)}
+                    >
+                        <Text style={styles.buttonText}>Delete</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.dateGroup}>
+                    <Text style={styles.dateText}>{item.date}</Text>
+                    <Text style={styles.dateText}>{item.time}</Text>
                 </View>
             </View>
-        )
-    }
+        </View>
+    );
+
     return (
-        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 20 }}>
+        <View style={styles.container}>
             <FlatList
                 data={[...todoList].reverse()}
                 keyExtractor={(item) => item.id}
                 renderItem={renderTodos}
-                ListHeaderComponent={
-                    <>
-                        <TodoListHeader text={text} setText={setText} editingTodoId={editingTodoId} handleAddTodo={handleAddTodo} />
-                    </>
-                }
                 contentContainerStyle={{ paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
             />
+            <TouchableOpacity
+                style={styles.fab}
+                onPress={() => navigation.navigate('AddTask')}
+            >
+                <Text style={{ fontSize: 30, color: '#fff' }}>＋</Text>
+            </TouchableOpacity>
         </View>
     );
-
 }
 
-export default TodoScreen
+export default TodoScreen;
 
 const styles = StyleSheet.create({
-    addButton: {
-        backgroundColor: '#27ae60',
-        borderRadius: 10,
-        marginVertical: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    addButtonText: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
-        padding: 5,
+    container: {
+        flex: 1,
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingHorizontal: 10,
     },
     todoItem: {
         backgroundColor: '#fff',
         padding: 15,
-        gap: 10,
         marginVertical: 8,
-        marginHorizontal: 4,
         borderRadius: 14,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.12,
         shadowRadius: 6,
         elevation: 5,
-    }
-    ,
+        paddingHorizontal: 10,
+        marginHorizontal: 1,
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    description: {
+        fontSize: 14,
+        color: '#555',
+        marginTop: 4,
+    },
+    priority: {
+        fontSize: 12,
+        color: '#e67e22',
+        marginTop: 4,
+        fontWeight: 'bold',
+    },
+    todoFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    buttonGroup: {
+        flexDirection: 'row',
+        gap: 10,
+    },
     editButton: {
         backgroundColor: '#3498db',
         paddingVertical: 7,
@@ -177,4 +159,23 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: 'bold',
     },
-})
+    dateGroup: {
+        alignItems: 'flex-end',
+    },
+    dateText: {
+        fontSize: 11,
+        color: 'gray',
+    },
+    fab: {
+        position: 'absolute',
+        bottom: 40,
+        alignSelf: 'center',
+        backgroundColor: '#27ae60',
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 6,
+    },
+});
