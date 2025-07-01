@@ -2,7 +2,6 @@
 import { Dimensions, ScrollView } from 'react-native';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'react-native';
-import { Link } from 'expo-router';
 
 const HomeScreen = ({ navigation }) => {
   const { height: screenHeight } = Dimensions.get('window');
@@ -21,16 +20,17 @@ const HomeScreen = ({ navigation }) => {
         <Text style={styles.description}>
           Todo will help you to stay organized and perform your tasks much faster.
         </Text>
-        <Link href="/todo" asChild>
+        {/* <Link href="/todo" asChild> */}
           <TouchableOpacity
             style={styles.button}
+            onPress={() => navigation.navigate('Todo')}
           >
 
             <Text style={styles.buttonText}>Get Started</Text>
 
 
           </TouchableOpacity>
-        </Link>
+        {/* </Link> */}
         <StatusBar backgroundColor="transparent" barStyle="dark-content" />
       </View>
     </ScrollView>

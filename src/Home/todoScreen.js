@@ -1,7 +1,10 @@
-import { FlatList, Dimensions, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { FlatList, Dimensions, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, View, Keyboard } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import Fallback from '../src/components/Fallback';
+import Fallback from '../components/Fallback';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import TodoListHeader from '../components/todoListHeader/todoListHeader';
+import { format } from 'date-fns';
 
 const TodoScreen = () => {
     const { height: screenHeight } = Dimensions.get('window');
@@ -47,20 +50,26 @@ const TodoScreen = () => {
             alert('Please enter Your task');
             return;
         }
-
+        const date = new Date();
+        const formattedDate = format(date, "dd MMMM yyyy");   // 👉 01 July 2025
+        const formattedTime = format(date, "hh:mm a");        // 👉 04:17 PM
         if (editingTodoId) {
             // Update existing todo
             const updatedTodos = todoList.map(todo =>
-                todo.id === editingTodoId ? { ...todo, text } : todo
+                todo.id === editingTodoId ? { ...todo, text, date: formattedDate, time: formattedTime } : todo
             );
             setTodoList(updatedTodos);
             setEditingTodoId(null); // Clear editing state
         } else {
             // Add new todo
-            setTodoList([...todoList, { id: Date.now().toString(), text }]);
+            setTodoList([...todoList, { id: Date.now().toString(), text, date: formattedDate, time: formattedTime }]);
         }
 
         setText(''); // Clear input
+        // ছোট delay দিয়ে কীবোর্ড বন্ধ করুন (state update এর পর)
+        setTimeout(() => {
+            Keyboard.dismiss();
+        }, 100);
     };
 
     // Handle Delete Todo
@@ -76,62 +85,46 @@ const TodoScreen = () => {
                 <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{item.text}</Text>
 
                 {/* edit button and delete button */}
-                <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 10, }}>
-                    <TouchableOpacity style={styles.editButton}
-                        onPress={() => {
-                            setText(item.text);
-                            setEditingTodoId(item.id);
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Edit</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDeleteTodo(item.id)} style={styles.deleteButton}>
-                        <Text style={styles.buttonText}>Delete</Text>
-                    </TouchableOpacity>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 5}}>
+                        <TouchableOpacity style={styles.editButton}
+                            onPress={() => {
+                                setText(item.text);
+                                setEditingTodoId(item.id);
+                            }}
+                        >
+                            <Text style={styles.buttonText}>Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDeleteTodo(item.id)} style={styles.deleteButton}>
+                            <Text style={styles.buttonText}>Delete</Text>
+                        </TouchableOpacity>
+                    </View>
+                    
+                    <View style={{ flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-end' }}>
+                        <Text style={{ fontSize: 11, color: 'gray' }}>{item.date}</Text>
+                        <Text style={{ fontSize: 11, color: 'gray' }}>{item.time}</Text>
+                    </View>
                 </View>
             </View>
         )
     }
     return (
-        <View style={{ marginHorizontal: 20, marginVertical: 10 }}>
-
-            <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 30 }}>📝 Your Todo List</Text>
-
-            {/* input */}
-            <TextInput
-                style={{
-                    borderWidth: 2,
-                    borderColor: 'black',
-                    borderRadius: 10,
-                    padding: 10,
-                    marginVertical: 10
-                }}
-
-                placeholder="Enter your task here"
-                value={text}
-                onChangeText={(text) => setText(text)}
+        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 20 }}>
+            <FlatList
+                data={[...todoList].reverse()}
+                keyExtractor={(item) => item.id}
+                renderItem={renderTodos}
+                ListHeaderComponent={
+                    <>
+                        <TodoListHeader text={text} setText={setText} editingTodoId={editingTodoId} handleAddTodo={handleAddTodo} />
+                    </>
+                }
+                contentContainerStyle={{ paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
             />
-            {/* add button */}
-            <TouchableOpacity onPress={handleAddTodo} style={styles.addButton}>
-                <Text style={styles.addButtonText}>
-                    {editingTodoId ? 'Update' : 'Add'}
-                </Text>
-            </TouchableOpacity>
-            {/* Dynamic height: screenHeight - 100 */}
-
-            <View style={{ height: screenHeight - 180 }}>
-                {todoList.length > 0 ? (
-                    <FlatList
-                        data={todoList}
-                        renderItem={renderTodos}
-                        keyExtractor={(item) => item.id}
-                        showsVerticalScrollIndicator={false}
-                    />
-                ) : <Fallback />}
-            </View>
-
         </View>
-    )
+    );
+
 }
 
 export default TodoScreen
@@ -165,19 +158,19 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.12,
         shadowRadius: 6,
         elevation: 5,
-      }
+    }
     ,
     editButton: {
         backgroundColor: '#3498db',
-        paddingVertical: 5,
+        paddingVertical: 7,
         paddingHorizontal: 10,
-        borderRadius: 10,
+        borderRadius: 5,
     },
     deleteButton: {
         backgroundColor: '#e74c3c',
-        paddingVertical: 5,
+        paddingVertical: 7,
         paddingHorizontal: 10,
-        borderRadius: 10,
+        borderRadius: 5,
     },
     buttonText: {
         color: 'white',
