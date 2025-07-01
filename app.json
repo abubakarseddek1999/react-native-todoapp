@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "my-app",
-    "slug": "my-app",
+    "name": "Todo-app",
+    "slug": "Todo-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/todo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/todo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,13 +17,19 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/todo.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.economics.myapp"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/todo.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bbe14353-5afb-40ff-ba06-618f4925abec"
+      }
     }
   }
 }

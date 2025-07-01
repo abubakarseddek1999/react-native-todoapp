@@ -1,24 +1,50 @@
 import { FlatList, Dimensions, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
-import Fallback from '../components/Fallback';
+import React, { useEffect, useState } from 'react'
+import Fallback from '../src/components/Fallback';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TodoScreen = () => {
     const { height: screenHeight } = Dimensions.get('window');
     const [text, setText] = useState('');
+    console.log(text)
     const [editingTodoId, setEditingTodoId] = useState(null);
     const [todoList, setTodoList] = useState([]);
-    console.log(todoList.length)
-    const [todos, setTodos] = useState([
-        { id: '1', text: 'Learn React Native Learn React Native Learn React Native Learn React Native Learn React Native' },
-        { id: '2', text: 'Build a Todo App Learn React Native Learn React Natives Learn React Native Learn React Native Learn React Native ' },
-        { id: '3', text: 'Create a UI Learn React Native Learn React Native Learn React Native Learn React Native Learn React Native' },
-        { id: '4', text: 'Learn Redux Learn React Native' },
-        { id: '5', text: 'Learn Firebase Learn React Native Learn React Native' },
-    ])
+    console.log(todoList)
+
+    // Load data from AsyncStorage
+    useEffect(() => {
+        const LoadTodosFromStorage = async () => {
+            try {
+                const storedTodos = await AsyncStorage.getItem('todos');
+                if (storedTodos) {
+                    setTodoList(JSON.parse(storedTodos));
+                }
+            } catch (error) {
+                console.error('Error loading todos from storage:', error);
+            }
+        };
+        LoadTodosFromStorage();
+
+
+    }, []); // Load data on component mount
+
+    useEffect(() => {
+        const SaveTodosToStorage = async () => {
+            try {
+                await AsyncStorage.setItem('todos', JSON.stringify(todoList));
+            } catch (error) {
+                console.error('Error saving todos to storage:', error);
+            }
+        };
+        SaveTodosToStorage();
+    }, [todoList]); // Save whenever todoList changes
+
+
+
     // Handle Add Todo
     const handleAddTodo = () => {
         if (text.trim() === '') {
-            alert('Please enter a todo');
+            alert('Please enter Your task');
             return;
         }
 
@@ -69,7 +95,7 @@ const TodoScreen = () => {
     return (
         <View style={{ marginHorizontal: 20, marginVertical: 10 }}>
 
-            <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 20 }}>📝 Todo List</Text>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 30 }}>📝 Your Todo List</Text>
 
             {/* input */}
             <TextInput
@@ -120,35 +146,26 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
-    }
-    ,
+    },
     addButtonText: {
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
         padding: 5,
-    }
-    ,
+    },
     todoItem: {
-        flexDirection: 'column',
-        backgroundColor:'white',
+        backgroundColor: '#fff',
+        padding: 15,
         gap: 10,
-        // backgroundColor: '#fff',
+        marginVertical: 8,
+        marginHorizontal: 4,
+        borderRadius: 14,
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.2,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.12,
+        shadowRadius: 6,
         elevation: 5,
-        shadowRadius: 20,
-        padding: 10,
-        borderRadius: 10,
-        marginHorizontal: 2,
-        marginVertical: 10,
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-    }
+      }
     ,
     editButton: {
         backgroundColor: '#3498db',
